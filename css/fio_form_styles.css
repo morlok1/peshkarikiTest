@@ -1,0 +1,63 @@
+input {width: 200px;}
+
+
+#fio_text   {
+    position: absolute;
+    left:5px;
+    top:5px;}
+#fio_form   {
+    position: absolute;
+    left:100px;
+    top:5px;
+    }
+
+
+#phone_text {
+    position: absolute;
+    left: 5px;
+    top:30px;
+}
+
+#phone_form {
+    position: absolute;
+    left:100px;
+    top:30px;
+}
+
+#address_text {
+    position: absolute;
+    left: 5px;
+    top:60px;
+}
+
+#address_form {
+    position: absolute;
+    left:100px;
+    top:60px;
+}
+
+#client_form_submit_button {
+    position: absolute;
+    top: 90px;
+    left: 25%;
+}
+
+#result {
+    position: absolute;
+    top: 120px;
+    left: 5px;
+}
+
+
+#client_form {
+    position: relative;
+    width: 400px; /* Ширина слоя в пикселах */
+    height:130px;
+    margin: 0 auto; /* Отступ слева и справа */
+    /*background: #fc0; /* Цвет фона */
+    border: 1px solid black; /* Рамка */
+    padding: 10px; /* Поля вокруг текста */
+    text-align: left; /* Выравнивание содержимого слоя по левому краю */
+    }
+
+body {background-color: antiquewhite}
