@@ -7,7 +7,7 @@ class Candidate extends CandidateAbstract
 	
 	public function run()
 	{
-		echo "Hello-run<br>";
+		echo $_GET["address"];
 	}
 	
 	public function calculateDistance($coordsCandidate)
