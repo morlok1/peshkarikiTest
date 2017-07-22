@@ -1,4 +1,8 @@
 <?php
+//Чтобы не вылезали варнинги при формировании json
+
+ini_set('display_errors','On');
+error_reporting('E_ALL');
 
 require_once 'CandidateAbstract.php';
 require_once 'Toolkit.php';
@@ -18,7 +22,13 @@ class Candidate extends CandidateAbstract
         $nearPointInformation = $this->calculateDistance(Toolkit::getCoords($address));
 
         //Получили все необходимые данные - формируем ответ
-
+        //Проверяем ошибку
+        if (!$nearPointInformation) {
+            $error = 1;
+            $nearPointInformation['name'] = "";
+            $nearPointInformation['distance'] = "";
+            $phone = "";
+        }
         $json_data = array( 'pointName' => $nearPointInformation['name'],
                             'distance' => $nearPointInformation['distance'],
                             'phone' => $phone,
@@ -28,12 +38,19 @@ class Candidate extends CandidateAbstract
         echo json_encode($json_data);
 
     }
-	
+
+
+    /**
+     * Производит нахождение ближайшего к клиенту
+     * пункта выдачи товара
+     *
+     * @param $coordsCandidate - координаты клиента
+     * @return mixed|bool - пара "название пункта выдачи", "расстояние до него" либо false, в случае ошибки
+     */
 	public function calculateDistance($coordsCandidate)
 	{
         $addressFrom = $this->getAddressByCoords($coordsCandidate['lat'],$coordsCandidate['lng']);
 
-        //Соединяемся с базой данных
         $db = $this->connectToDatabases();
 
         $query = "SELECT name, lat, lng FROM issue_point_table";
@@ -59,13 +76,21 @@ class Candidate extends CandidateAbstract
 
 
                 $nowDistance = $this->getDistance($addressFrom, $addressTo);
-                if ($minDistance == 0) {
-                    $minDistance = $nowDistance;
-                    $pointName = $row[0];
+
+                //Если все хорошо - работаем
+                if ($nowDistance) {
+                    //Если проход первый
+                    if ($minDistance == 0) {
+                        $minDistance = $nowDistance;
+                        $pointName = $row[0];
+                    } //Иначе сравниваем
+                    else if ($minDistance > $nowDistance) {
+                        $minDistance = $nowDistance;
+                        $pointName = $row[0];
+                    }
                 }
-                else if ($minDistance > $nowDistance) {
-                    $minDistance = $nowDistance;
-                    $pointName = $row[0];
+                else { //Если что-то пошло не так - возвращаем ошибку и вылетаем отсюда
+                       return false;
                 }
             }
         }
@@ -128,8 +153,9 @@ class Candidate extends CandidateAbstract
      * @param $to - адрес назначения
      * @return bool|string - расстояние между точками, либо false, в случае ошибки
      */
-    public function getDistance($from, $to) {
-        if(!$from || !$to){
+    public function getDistance($from, $to)
+    {
+        if (!$from || !$to) {
             return false;
         }
 
@@ -139,9 +165,13 @@ class Candidate extends CandidateAbstract
         $data = file_get_contents("https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=" . $from . "&destinations=" . $to . "&key=" . $key);
         $json = json_decode($data);
 
-        $result = $json->rows[0]->elements[0]->distance->text;
-        $result = trim(str_replace("km", "", $result));//preg_replace("[0-9]","",$result);
-
+        if ($json->rows[0]->elements[0]->status == "OK") {
+            $result = $json->rows[0]->elements[0]->distance->text;
+            $result = ereg_replace("[^0-9,/.]", "", $result);
+        }
+        else {
+            $result = false;
+        }
         return $result;
     }
 	

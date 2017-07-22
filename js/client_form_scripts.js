@@ -4,16 +4,15 @@
  */
 function processClientForm() {
 
+    //Чистим старый результат
+    document.getElementById("result").innerText = "";
 
-    if (true/*validateClientForm()*/) {
+    if (validateClientForm()) {
 
         var address = document.getElementById("address_form").value;
         var phone = document.getElementById("phone_form").value;
         submitClientForm(address, phone);
 
-    }
-    else {
-        document.getElementById("result").innerText = "No.";
     }
 }
 
@@ -72,12 +71,10 @@ function submitClientForm(address, phone) {
     xhr.send();
     if (xhr.status != 200)
     {
-
         document.getElementById('result').innerText = "Some thing wrong...";
     }
     else
     {
-        //document.getElementById('result').innerText = xhr.responseText.toJSON();
         var json_data = xhr.responseText;
         var data = JSON.parse(json_data);
         if (data['error'] == 0) {
@@ -87,8 +84,12 @@ function submitClientForm(address, phone) {
             var point = data['pointName'];
             var distance = data['distance']
 
-            resultString = fio + " (" + phone + "): ближайщий пункт выдачи " + point + " находится на расстоянии " + distance + " км.";
+            resultString = fio + " (" + phone + "): ближайщий пункт выдачи " +
+                            point + " находится на расстоянии " + distance + " км.";
             document.getElementById("result").innerText = resultString;
+        }
+        else {
+            document.getElementById("result").innerText = "Что-то пошло не так. Проверьте, пожалуйста, свои галактические координаты."
         }
 
     }
