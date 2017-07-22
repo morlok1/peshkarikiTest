@@ -76,7 +76,7 @@ body {background-color: antiquewhite}
 #client_form {
     position: relative;
     width: 410px; /* Ширина слоя в пикселах */
-    height:130px;
+    height:150px;
     margin: 0 auto; /* Отступ слева и справа */
     /*background: #fc0; /* Цвет фона */
     border: 1px solid black; /* Рамка */

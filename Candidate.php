@@ -3,40 +3,89 @@
 require_once 'CandidateAbstract.php';
 require_once 'Toolkit.php';
 
-//AIzaSyDFIWIuAKGm5fEM8FhzXTMSMf1ehVRiT4Q
 class Candidate extends CandidateAbstract
 {
 	
 	public function run()
     {
+        $error = 0;
 
         $address = $_GET['address'];
         $phone = $_GET['phone'];
 
         $phone = Toolkit::getFormattedPhone($phone);
 
-        $distance = $this->calculateDistance(Toolkit::getCoords($address));
+        $nearPointInformation = $this->calculateDistance(Toolkit::getCoords($address));
+
+        //Получили все необходимые данные - формируем ответ
+
+        $json_data = array( 'pointName' => $nearPointInformation['name'],
+                            'distance' => $nearPointInformation['distance'],
+                            'phone' => $phone,
+                            'error' => $error);
+
+        //Возвращаем
+        echo json_encode($json_data);
 
     }
 	
 	public function calculateDistance($coordsCandidate)
 	{
-        $addressFrom = $this->getAddressByCoords($coordsCandidate);
-
+        $addressFrom = $this->getAddressByCoords($coordsCandidate['lat'],$coordsCandidate['lng']);
 
         //Соединяемся с базой данных
         $db = $this->connectToDatabases();
 
-        $query = "SELECT * FROM issue_point_table";
+        $query = "SELECT name, lat, lng FROM issue_point_table";
+
+        $answer = mysqli_query($db, $query)
+        or die("Error " . mysqli_error($db));
+
+        $minDistance = 0;
+        $pointName = "";
+
+        if ($answer) {
 
 
+            $rows = mysqli_num_rows($answer);
 
+            for ($i = 0; $i < $rows; $i++) {
+                $row = mysqli_fetch_row($answer);
+                //Получили координаты
+                $lat = $row[1];
+                $lng = $row[2];
+
+                $addressTo = $this->getAddressByCoords($lat,$lng);
+
+
+                $nowDistance = $this->getDistance($addressFrom, $addressTo);
+                if ($minDistance == 0) {
+                    $minDistance = $nowDistance;
+                    $pointName = $row[0];
+                }
+                else if ($minDistance > $nowDistance) {
+                    $minDistance = $nowDistance;
+                    $pointName = $row[0];
+                }
+            }
+        }
 
         mysqli_close($db);
 
+        //Теперь у нас есть название и расстояние до ближайшего пункта выдачи
+
+        $result['name']=  $pointName;
+        $result['distance'] = $minDistance;
+
+        return $result;
 		
 	}
 
+
+	/**
+	 * Производит подключение к тестовой базе данных, в которой хранится
+     * информация о всех доступных точках выдачи
+	 */
 	public function connectToDatabases() {
         $host = 'localhost'; // адрес сервера
         $database = 'test'; // имя базы данных
@@ -50,6 +99,15 @@ class Candidate extends CandidateAbstract
         return $link;
     }
 
+
+    /**
+     * Возвращает адрес точки заданной широтой и долготой
+     * с исоплзованием google maps api
+     *
+     * @param $lat - широта точки
+     * @param $lng - долгота точки
+     * @return bool|string - адрес заданной точки, либо false, в случае ошибки
+     */
     public function getAddressByCoords($lat, $lng) {
         if(!$lat || !$lng){
             return false;
@@ -62,6 +120,14 @@ class Candidate extends CandidateAbstract
         return $result;
     }
 
+    /**
+     * Расчитывает расстояние между двумя заданными адресами
+     * с использованием google maps api
+     *
+     * @param $from - адрес отправления
+     * @param $to - адрес назначения
+     * @return bool|string - расстояние между точками, либо false, в случае ошибки
+     */
     public function getDistance($from, $to) {
         if(!$from || !$to){
             return false;
@@ -70,11 +136,11 @@ class Candidate extends CandidateAbstract
         $from = str_replace(" ", "-", $from);
         $to = str_replace(" ", "-", $to);
         $key = "AIzaSyDFIWIuAKGm5fEM8FhzXTMSMf1ehVRiT4Q";
-        $data = file_get_contents("https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=" . $from . "&destinations=" . $to . "&key=" . $key);
+        $data = file_get_contents("https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=" . $from . "&destinations=" . $to . "&key=" . $key);
         $json = json_decode($data);
 
         $result = $json->rows[0]->elements[0]->distance->text;
-        $result = trim(str_replace("mi", "", $result));
+        $result = trim(str_replace("km", "", $result));//preg_replace("[0-9]","",$result);
 
         return $result;
     }

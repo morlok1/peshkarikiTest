@@ -77,6 +77,19 @@ function submitClientForm(address, phone) {
     }
     else
     {
-        document.getElementById('result').innerText = xhr.responseText;
+        //document.getElementById('result').innerText = xhr.responseText.toJSON();
+        var json_data = xhr.responseText;
+        var data = JSON.parse(json_data);
+        if (data['error'] == 0) {
+            var resultString;
+            var fio = document.getElementById("fio_form").value;
+            var phone = data['phone'];
+            var point = data['pointName'];
+            var distance = data['distance']
+
+            resultString = fio + " (" + phone + "): ближайщий пункт выдачи " + point + " находится на расстоянии " + distance + " км.";
+            document.getElementById("result").innerText = resultString;
+        }
+
     }
 }
