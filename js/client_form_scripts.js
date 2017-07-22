@@ -4,10 +4,12 @@
  */
 function processClientForm() {
 
-    if (validateClientForm()) {
+
+    if (true/*validateClientForm()*/) {
 
         var address = document.getElementById("address_form").value;
-        submitClientForm(address);
+        var phone = document.getElementById("phone_form").value;
+        submitClientForm(address, phone);
 
     }
     else {
@@ -18,7 +20,7 @@ function processClientForm() {
 /**
  * Проверяет поля формы на корректность:
  *      Фамилия Имя Отчество - не пусто
- *      Телефон - содержит больше 6 символов и меньше 12
+ *      Телефон - содержит ровно 10 символов
  *      Адрес - не пусто
  * @returns {boolean} - корректность заполненной формы
  */
@@ -36,12 +38,8 @@ function validateClientForm() {
         isValid = false;
     }
 
-    var phoneLength = document.getElementById("phone_form").value.length;
-    if (phoneLength < 7) {
-        document.getElementById("phone_error").innerText = "Less than 7";
-        isValid = false;
-    } else if (phoneLength > 11) {
-        document.getElementById("phone_error").innerText = "More than 11";
+    if (document.getElementById("phone_form").value.length != 10) {
+        document.getElementById("phone_error").innerText = "Not 10 characters";
         isValid = false;
     }
 
@@ -60,10 +58,12 @@ function validateClientForm() {
  * выдачи и расстояния до него.
  * @param address - адрес клиента
  */
-function submitClientForm(address) {
+function submitClientForm(address, phone) {
+
     //Здесь будет происходить отправка формы
     var url = "ajax.php?"
-            + "address=" + address;
+            + "address=" + address
+            + "&phone=" + phone;
     var xhr = new XMLHttpRequest();
 
     //Конфигурируем запрос
